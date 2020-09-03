@@ -19,7 +19,7 @@ from __future__ import division
 from __future__ import print_function
 
 # pylint: disable=unused-import,wildcard-import,line-too-long
-from tensorflow.contrib.quantize.python.quantize_graph import *
+from training.tf_v1_qat.quantize.python.quantize_graph import *
 # pylint: enable=unused-import,wildcard-import,line-too-long
 
 from tensorflow.python.util.all_util import remove_undocumented

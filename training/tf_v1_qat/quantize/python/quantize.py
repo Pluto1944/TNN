@@ -19,10 +19,10 @@ from __future__ import division
 from __future__ import print_function
 
 import re
-from tensorflow.contrib.quantize.python import common
-from tensorflow.contrib.quantize.python import graph_matcher
-from tensorflow.contrib.quantize.python import input_to_ops
-from tensorflow.contrib.quantize.python import quant_ops
+from training.tf_v1_qat.quantize.python import common
+from training.tf_v1_qat.quantize.python import graph_matcher
+from training.tf_v1_qat.quantize.python import input_to_ops
+from training.tf_v1_qat.quantize.python import quant_ops
 from tensorflow.python.framework import ops
 from tensorflow.python.ops import control_flow_ops
 from tensorflow.python.ops import math_ops

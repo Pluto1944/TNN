@@ -19,9 +19,9 @@ from __future__ import division
 from __future__ import print_function
 
 import re
-from tensorflow.contrib.quantize.python import common
-from tensorflow.contrib.quantize.python import graph_matcher
-from tensorflow.contrib.quantize.python import input_to_ops
+from training.tf_v1_qat.quantize.python import common
+from training.tf_v1_qat.quantize.python import graph_matcher
+from training.tf_v1_qat.quantize.python import input_to_ops
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import ops

@@ -37,7 +37,7 @@ from training.tf_v1_qat.examples.utils.flags import core as flags_core
 from training.tf_v1_qat.examples.utils.logs import hooks_helper, logger
 from training.tf_v1_qat.examples.utils.misc import model_helpers, distribution_utils
 
-from tensorflow.contrib import quantize
+from training.tf_v1_qat.quantize.python import quantize
 from tensorflow.python.ops import array_ops
 
 

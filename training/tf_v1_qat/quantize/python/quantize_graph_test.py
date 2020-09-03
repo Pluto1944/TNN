@@ -21,7 +21,7 @@ from __future__ import print_function
 import functools
 
 from tensorflow.contrib.layers.python.layers import layers
-from tensorflow.contrib.quantize.python import quantize_graph
+from training.tf_v1_qat.quantize.python import quantize_graph
 from tensorflow.python import training
 from tensorflow.python.compat import compat
 from tensorflow.python.framework import ops

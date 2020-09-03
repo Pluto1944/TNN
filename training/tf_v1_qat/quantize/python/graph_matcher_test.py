@@ -21,7 +21,7 @@ from __future__ import print_function
 from tensorflow.contrib.framework.python import ops as contrib_ops
 from tensorflow.contrib.layers.python.layers import initializers
 from tensorflow.contrib.layers.python.layers import layers
-from tensorflow.contrib.quantize.python import graph_matcher
+from training.tf_v1_qat.quantize.python import graph_matcher
 from tensorflow.python.compat import compat
 from tensorflow.python.framework import constant_op
 from tensorflow.python.framework import dtypes

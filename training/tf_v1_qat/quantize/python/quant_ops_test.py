@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Tests for third_party.tensorflow.contrib.quantize.python.quant_ops."""
+"""Tests for third_party.training.tf_v1_qat.quantize.python.quant_ops."""
 
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from tensorflow.contrib.quantize.python import quant_ops
+from training.tf_v1_qat.quantize.python import quant_ops
 from tensorflow.python.client import session
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import ops

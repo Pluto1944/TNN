@@ -19,7 +19,7 @@ from __future__ import division
 from __future__ import print_function
 
 from tensorflow.contrib.layers.python.layers import layers
-from tensorflow.contrib.quantize.python import fold_batch_norms
+from training.tf_v1_qat.quantize.python import fold_batch_norms
 from tensorflow.python.client import session
 from tensorflow.python.compat import compat
 from tensorflow.python.framework import dtypes

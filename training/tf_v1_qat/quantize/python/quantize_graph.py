@@ -18,8 +18,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from tensorflow.contrib.quantize.python import fold_batch_norms
-from tensorflow.contrib.quantize.python import quantize
+from training.tf_v1_qat.quantize.python import fold_batch_norms
+from training.tf_v1_qat.quantize.python import quantize
 from tensorflow.python.framework import ops
 
 

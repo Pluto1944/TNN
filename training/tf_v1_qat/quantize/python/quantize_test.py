@@ -20,7 +20,7 @@ from __future__ import print_function
 
 from tensorflow.contrib.framework.python.ops import variables
 from tensorflow.contrib.layers.python.layers import layers
-from tensorflow.contrib.quantize.python import quantize
+from training.tf_v1_qat.quantize.python import quantize
 from tensorflow.python.framework import ops
 from tensorflow.python.framework import test_util
 from tensorflow.python.ops import array_ops
