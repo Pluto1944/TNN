@@ -1,5 +1,6 @@
 .DS_Store
 .vscode
+.idea
 build
 build32
 build64
@@ -181,7 +182,8 @@ tags
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
+
 
 # Thumbnails
 ._*
