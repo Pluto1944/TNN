@@ -52,7 +52,7 @@ def add_observer_(module):
        len(module._modules) == 0 and not isinstance(module, torch.nn.Sequential):
         # observer and hook will be gone after we swap the module
         if hasattr(module, 'onnx') and module.onnx is True:
-            module.qconfig=default_fake_onnx_qconfig
+            # module.qconfig=default_fake_onnx_qconfig
             module.add_module('activation_post_process', module.qconfig.activation())
         else:
             module.add_module('activation_post_process', module.qconfig.activation())
@@ -164,7 +164,7 @@ def swap_module(mod, mapping):
 
 class QuantizableModel(nn.Module):
 
-    def __init__(self, model, input_shape=None, qconfig=None, black_list=[], auto=True):
+    def __init__(self, model, input_shape=None, qconfig=None, black_list=[], auto=True, graphoptimizer='hard'):
         super(QuantizableModel, self).__init__()
         self.model = model
         self.quant = torch.quantization.QuantStub()
@@ -179,6 +179,7 @@ class QuantizableModel(nn.Module):
         _replace_relu(self.model)
 
         self.black_list = black_list
+        self.graphoptimizer = graphoptimizer
 
         if auto:
             self.fuse_model()
@@ -203,7 +204,7 @@ class QuantizableModel(nn.Module):
 
     def fuse_model(self):
         g = Graph(self.model, self.image)
-        g.optimizer()
+        g.optimizer(graphoptimizer=self.graphoptimizer)
 
     def prepare_qat(self, mapping=None, black_list=[]):
 
@@ -251,7 +252,7 @@ class QuantizableModel(nn.Module):
         convert(self, mapping, inplace=True)
 
 
-def test_quant_model(model1, model2, x_shape, layername=None, layername_auto=None, onnx=False, intermediate_results=True):
+def test_quant_model(model1, model2, x_shape, layername=None, layername_auto=None, onnx=False, intermediate_results=True, graphoptimizer='hard'):
 
     temp_result = []
     temp_result_auto = []
@@ -279,7 +280,7 @@ def test_quant_model(model1, model2, x_shape, layername=None, layername_auto=Non
     # pytorch
     result = model(x)
 
-    model_auto = QuantizableModel(model2, x_shape, auto=False)
+    model_auto = QuantizableModel(model2, x_shape, auto=False, graphoptimizer=graphoptimizer)
 
     # Optional_black_list = [name for name, module in model_auto.named_modules() if len([x for x in module.named_modules()]) == 1]
     # print(f'Optional shielding quantization network layer:{Optional_black_list}')
@@ -337,11 +338,11 @@ def test_quant_model(model1, model2, x_shape, layername=None, layername_auto=Non
 
 def main():
 
-    print(f'resnet50')
+    print(f'resnet18')
     test_quant_model(
         torchvision.models.quantization.resnet18(pretrained=True),
         torchvision.models.resnet18(pretrained=True),
-        x_shape=[2, 3, 224, 224],  layername='layer1', layername_auto='layer1',
+        x_shape=[2, 3, 224, 224],  layername='layer4', layername_auto='layer4',
         onnx=False, intermediate_results=True)
 
     print('\n')

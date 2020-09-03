@@ -80,10 +80,11 @@ def get_post_layer_node(node, result=[]):
 
 class GraphOptimizer(object):
 
-    def __init__(self, model, graph, fuse_mode):
+    def __init__(self, model, graph, fuse_mode, graphoptimizer='hard'):
         self.model = model
         self.graph = graph
         self.fuse_mode = fuse_mode
+        self.graphoptimizer = graphoptimizer
         self.input_to_ops = InputToOps(self.graph)
         self.init()
 
@@ -97,9 +98,11 @@ class GraphOptimizer(object):
 
         self.fuse_op()
 
-        self.unrecognized_op_optimizer()
+        if self.graphoptimizer == 'hard':
 
-        self.invisible_op_optimizer()
+            self.unrecognized_op_optimizer()
+
+            self.invisible_op_optimizer()
 
 
     # fix bug for unrecognized quantized operator for flatten, reshape, maxpool and etc.
@@ -268,8 +271,14 @@ class GraphOptimizer(object):
             """
             return torch.nn.ReLU(inplace=True).forward(output)
 
-        # resnet add relu
-        # layers = set([k.split('conv')[0][:-1] for k, v in self.model.named_parameters() if 'conv' in k and 'layer' in k])
-        layers = set(k.replace('.relu', '') for k, v in self.aten_op_matches['relu'].items() if v > 1)
-        for layer in layers:
-            _get_module(self.model, layer).register_forward_hook(hook)
+        if self.graphoptimizer == 'hard':
+            # resnet add relu
+            # layers = set([k.split('conv')[0][:-1] for k, v in self.model.named_parameters() if 'conv' in k and 'layer' in k])
+            layers = set(k.replace('.relu', '') for k, v in self.aten_op_matches['relu'].items() if v > 1)
+            for layer in layers:
+                _get_module(self.model, layer).register_forward_hook(hook)
+        else:
+            layers = set(k.replace('.relu', '') for k, v in self.aten_op_matches['relu'].items() if v > 1)
+            for layer in layers:
+                _get_module(self.model, layer).add_module('layer_process_3', torch.nn.ReLU())
+                _get_module(self.model, layer).register_forward_hook(lambda self, input, output: self.layer_process_3(output))

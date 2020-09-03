@@ -29,7 +29,7 @@ class Graph():
                 print('Error occurs, No graph saved')
                 raise e
 
-    def optimizer(self, fuse_mode=2):
+    def optimizer(self, fuse_mode=2, graphoptimizer='hard'):
 
-        go = GraphOptimizer(self.model, self.graph, fuse_mode)
+        go = GraphOptimizer(self.model, self.graph, fuse_mode, graphoptimizer=graphoptimizer)
         go.graph_optimizer()
