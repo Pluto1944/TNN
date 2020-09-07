@@ -85,7 +85,7 @@ torch.onnx.export(model, x, 'resnet_qat.onnx', input_names=input_names, example_
 
 ### resnet模型修改
 
-路径examples/models/resnet.py下有一份修改完成的resnet模型，可以替换torchvision.models.resnet18来成功进行resnet18的量化和模型转换。
+路径examples/models/resnet_.py下有一份修改完成的resnet模型，可以替换torchvision.models.resnet18来成功进行resnet18的量化和模型转换。
 
 #### bug1：
 
