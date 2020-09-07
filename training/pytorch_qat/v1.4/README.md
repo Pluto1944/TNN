@@ -12,6 +12,8 @@ https://github.com/pytorch/pytorch/tree/9e7dc37f902af78b26739410766e79e63f53e27f
 
 简化版本仅有模块自动融合功能，其余功能在2. 自动版本中支持。以下以resnet为例完成resnet模型的量化，模型转换等操作。
 
+（如果出现bug可以根据提供的resnet模型修改方案修改模型）
+
 **一键配置**
 
 ```python
@@ -102,11 +104,13 @@ out += identity
 修改代码：
 
 ```python
+from quantization_wrap.utils import ops
+
 # init() 添加
-self.op = nn.quantized.FloatFunctional()
+self.add = ops.AddWrap()
 
 # forword() 添加
-out = self.op.add(out, identity)
+out = self.add(out, identity)
 ```
 
 #### bug2
@@ -127,13 +131,10 @@ x = torch.flatten(x, 1)
 
 ```python
 # init() 添加
-self.flatten_dequant = torch.quantization.DeQuantStub()
-self.flatten_quant = torch.quantization.QuantStub()
+self.flatten = ops.FlattenWrap()
 
 # forword() 添加
-x = self.flatten_dequant(x)
-x = torch.flatten(x, 1)
-x = self.flatten_quant(x)
+x = self.flatten(x)
 ```
 
 #### bug3
@@ -153,14 +154,13 @@ x = self.maxpool(x)
 修改代码：
 
 ```python
-# init() 添加
-self.maxpool_dequant = torch.quantization.DeQuantStub()
-self.maxpool_quant = torch.quantization.QuantStub()
+from quantization_wrap.utils import ops
 
-# forword() 添加
-x = self.maxpool_dequant(x)
+# init() 修改
+self.maxpool = ops.MaxPoolWrap(kernel_size=3, stride=2, padding=1)
+
+# forword() 修改
 x = self.maxpool(x)
-x = self.maxpool_quant(x)
 ```
 
 ## 2. 自动版本
