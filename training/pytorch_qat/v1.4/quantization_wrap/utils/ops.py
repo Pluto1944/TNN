@@ -13,6 +13,53 @@ class AddWrap(nn.Module):
         return self.op.add(x, y)
 
 
+class MulWrap(nn.Module):
+
+    def __init__(self, kernel_size=3, stride=2, padding=1):
+        super(MulWrap, self).__init__()
+
+        self.mul_dequant = torch.quantization.DeQuantStub()
+        self.mul_quant = torch.quantization.QuantStub()
+
+    def forward(self, x, y):
+        x = self.mul_dequant(x)
+        y = self.mul_dequant(y)
+        x = x * y
+        x = self.mul_quant(x)
+        return x
+
+
+class ViewWrap(nn.Module):
+
+    def __init__(self):
+        super(ViewWrap, self).__init__()
+        self.view_dequant = torch.quantization.DeQuantStub()
+        self.view_quant = torch.quantization.QuantStub()
+
+    def forward(self, x, shape):
+        x = self.view_dequant(x)
+        x = x.view(shape)
+        x = self.view_quant(x)
+        return x
+
+
+class AdaAvgPoolWrap(nn.Module):
+
+    def __init__(self, output_size=(1, 1)):
+        super(AdaAvgPoolWrap, self).__init__()
+
+        self.adaavgpool = nn.AdaptiveAvgPool2d(output_size)
+
+        self.adaavgpool_dequant = torch.quantization.DeQuantStub()
+        self.adaavgpool_quant = torch.quantization.QuantStub()
+
+    def forward(self, x):
+        x = self.adaavgpool_dequant(x)
+        x = self.adaavgpool(x)
+        x = self.adaavgpool_quant(x)
+        return x
+
+
 class MaxPoolWrap(nn.Module):
 
     def __init__(self, kernel_size=3, stride=2, padding=1):
