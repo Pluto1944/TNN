@@ -338,7 +338,7 @@ def test_quant_model(model1, model2, x_shape, layername=None, layername_auto=Non
 
 def main():
 
-    print(f'resnet18')
+    print('resnet18')
     test_quant_model(
         torchvision.models.quantization.resnet18(pretrained=True),
         torchvision.models.resnet18(pretrained=True),
@@ -346,7 +346,7 @@ def main():
         onnx=False, intermediate_results=True)
 
     print('\n')
-    print(f'mobilenet_v2')
+    print('mobilenet_v2')
     test_quant_model(
         torchvision.models.quantization.mobilenet_v2(pretrained=True),
         torchvision.models.mobilenet_v2(pretrained=True),

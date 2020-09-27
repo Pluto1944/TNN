@@ -66,14 +66,16 @@ model = ConvNet()
 # x = torch.ones(x_shape)
 # model = FcNet()
 
+#pytorch2onnx
+###################################################################
 import os, sys
 base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(base_path)
 from quantization_wrap.quant_model import QuantizableModel
 from quantization_wrap.quant_model import convert
+from quantization_wrap.quantization.symmetric_qconfig import get_default_qat_qconfig
 
-
-qconfig = torch.quantization.get_default_qat_qconfig('qnnpack')
+qconfig = get_default_qat_qconfig('qnnpack')
 
 black_list = []
 model_auto = QuantizableModel(model, x_shape, qconfig, black_list=[], graphoptimizer='easy')
