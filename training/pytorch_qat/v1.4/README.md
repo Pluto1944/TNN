@@ -32,6 +32,11 @@ qconfig = torch.quantization.get_default_qat_qconfig('qnnpack')
 model_auto = QuantizableModel(model, x_shape, qconfig, black_list=[], graphoptimizer='easy')
 
 result = model_auto(x)
+
+# wrap_optimizer
+from quantization_wrap.graph.graph_optimizer import wrap_optimizer
+wrap_optimizer(model_auto, x)
+
 ```
 
 **手动配置**
@@ -63,6 +68,11 @@ black_list = []
 model_auto.prepare_qat(black_list=black_list)
 
 result = model_auto(x)
+
+# wrap_optimizer
+from quantization_wrap.graph.graph_optimizer import wrap_optimizer
+wrap_optimizer(model_auto, x)
+
 ```
 
 **模型转换**
