@@ -59,6 +59,8 @@ class BasicBlock(nn.Module):
 
         self.add = ops.AddWrap()
 
+        self.wrap_relu = ops.ReluWrap()
+
     def forward(self, x):
         identity = x
 
@@ -74,7 +76,7 @@ class BasicBlock(nn.Module):
 
         # out += identity
         out = self.add(out, identity)
-        out = self.relu(out)
+        out = self.wrap_relu(out)
 
         return out
 

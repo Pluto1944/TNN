@@ -2,15 +2,48 @@ import torch
 import torch.nn as nn
 
 
+# class AddWrap(nn.Module):
+#
+#     def __init__(self):
+#         super(AddWrap, self).__init__()
+#
+#         self.op = nn.quantized.FloatFunctional()
+#
+#     def forward(self, x, y):
+#         return self.op.add(x, y)
+
+
 class AddWrap(nn.Module):
 
-    def __init__(self, kernel_size=3, stride=2, padding=1):
+    def __init__(self):
         super(AddWrap, self).__init__()
 
-        self.op = nn.quantized.FloatFunctional()
+        self.add_dequant = torch.quantization.DeQuantStub()
+        self.add_quant = torch.quantization.QuantStub()
 
     def forward(self, x, y):
-        return self.op.add(x, y)
+        x = self.add_dequant(x)
+        y = self.add_dequant(y)
+        x = x + y
+        x = self.add_quant(x)
+        return x
+
+class ReluWrap(nn.Module):
+
+    def __init__(self):
+        super(ReluWrap, self).__init__()
+
+        self.relu = nn.ReLU(inplace=True)
+
+        self.relu_dequant = torch.quantization.DeQuantStub()
+        self.relu_quant = torch.quantization.QuantStub()
+
+    def forward(self, x):
+        x = self.relu_dequant(x)
+        x = self.relu(x)
+        x = self.relu_quant(x)
+
+        return x
 
 
 class MulWrap(nn.Module):

@@ -39,7 +39,9 @@ def wrap_optimizer(model_auto, x):
     graph = traced.graph
     torch._C._jit_pass_inline(graph)
 
-    nodes = [node for node in graph.nodes() if 'aten' in node.kind()][1:-1]
+    nodes = [node for node in graph.nodes() if 'aten' in node.kind() or 'quantized' in node.kind()][1:-1]
+
+    # nodes = [node for node in graph.nodes()][1:-1]
 
     for i, node in enumerate(nodes):
         if i + 1 == len(nodes): continue
