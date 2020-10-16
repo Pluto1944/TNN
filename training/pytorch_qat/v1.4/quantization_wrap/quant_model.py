@@ -178,7 +178,11 @@ class QuantizableModel(nn.Module):
         # torch.nn.quantized.functional.relu() that supports activation function for pytorch quantization
         _replace_relu(self.model)
 
-        self.black_list = black_list
+        # Set default blacklist
+        default_black_list = ['model.'+n for n, w in model.named_modules() if n.endswith('wrap_relu.relu')]
+        # Set blacklist
+        self.black_list = black_list + default_black_list
+
         self.graphoptimizer = graphoptimizer
 
         if auto:

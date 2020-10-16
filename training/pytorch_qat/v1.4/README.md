@@ -29,10 +29,7 @@ model = torchvision.models.resnet18(pretrained=True)
 
 qconfig = torch.quantization.get_default_qat_qconfig('qnnpack')
 
-black_list=['model.layer1.0.wrap_relu.relu', 'model.layer1.1.wrap_relu.relu',
-    'model.layer2.0.wrap_relu.relu', 'model.layer2.1.wrap_relu.relu',
-    'model.layer3.0.wrap_relu.relu', 'model.layer3.1.wrap_relu.relu',
-    'model.layer4.0.wrap_relu.relu', 'model.layer4.1.wrap_relu.relu']
+black_list=[]
 
 model_auto = QuantizableModel(model, x_shape, qconfig, black_list=black_list, graphoptimizer='easy')
 
@@ -69,10 +66,7 @@ qconfig = torch.quantization.get_default_qat_qconfig('qnnpack')
 model_auto.qconfig = qconfig
 
 # black_list to add layers without quantization
-black_list=['model.layer1.0.wrap_relu.relu', 'model.layer1.1.wrap_relu.relu',
-    'model.layer2.0.wrap_relu.relu', 'model.layer2.1.wrap_relu.relu',
-    'model.layer3.0.wrap_relu.relu', 'model.layer3.1.wrap_relu.relu',
-    'model.layer4.0.wrap_relu.relu', 'model.layer4.1.wrap_relu.relu']
+black_list=[]
 model_auto.prepare_qat(black_list=black_list)
 
 result = model_auto(x)
