@@ -1,14 +1,17 @@
 import torch
-import torch.nn as nn
 
+import os, sys
+base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(base_path)
+from quantization_wrap.quant_model import QuantizableModel
+from quantization_wrap.quant_model import convert
 x_shape = [2, 3, 224, 224]
+
 x = torch.ones(x_shape)
 
+# model = torchvision.models.resnet18(pretrained=True)
 from models.resnet_ import resnet18
 model = resnet18(pretrained=True)
-result_fp32 = model(x)
-print("******** fp32 model ********")
-#print(model)
 
 ############# step1. add fake op in fp32 model
 print("step1. add fake op ********")
