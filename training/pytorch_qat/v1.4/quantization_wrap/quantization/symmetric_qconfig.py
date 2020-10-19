@@ -13,7 +13,7 @@ class QConfig(namedtuple('QConfig', ['activation', 'weight'])):
 
 def get_default_qat_qconfig(backend='fbgemm'):
     if backend == 'fbgemm':
-        return
+        raise ValueError("Not support fbgemm in qconfig, use qnnpack or qnnpack_perchannel")
     elif backend == 'qnnpack':
         qconfig = QConfig(activation=FakeQuantize.with_args(observer=MovingAverageMinMaxObserver,
                                                             quant_min=0,
@@ -22,6 +22,14 @@ def get_default_qat_qconfig(backend='fbgemm'):
                                                             qscheme=torch.per_tensor_symmetric,
                                                             reduce_range=False),
                           weight=default_weight_fake_quant)
+    elif backend == 'qnnpack_perchannel':
+        qconfig = QConfig(activation=FakeQuantize.with_args(observer=MovingAverageMinMaxObserver,
+                                                            quant_min=0,
+                                                            quant_max=255,
+                                                            dtype=torch.quint8,
+                                                            qscheme=torch.per_tensor_symmetric,
+                                                            reduce_range=False),
+                          weight=default_per_channel_weight_fake_quant)
     else:
         raise ValueError("Unknown backend, please specify qconfig manually")
 
