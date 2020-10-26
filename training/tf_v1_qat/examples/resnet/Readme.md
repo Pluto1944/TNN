@@ -9,7 +9,7 @@ This sample demonstrates workflow for training and inference of Resnet-50 model 
  - Dependencies required for this sample: Tensorflow 1.15
 
     ```
-    cd training/tf_v1_qat/examples/resnet
+    cd training/tf_v1_qat/examples/
     python imagenet_main.py --data_dir=/path/imagenet/train --num_gpus=4 --rv=1
     ```
 
@@ -17,6 +17,6 @@ This sample demonstrates workflow for training and inference of Resnet-50 model 
   - Finetune a RN50 model with quantization nodes and save the final checkpoint.
 
     ```
-    cd training/tf_v1_qat/examples/resnet
+    cd training/tf_v1_qat/examples/
     python imagenet_main.py --data_dir=/path/imagenet/train --num_gpus=1 --rv=1 --pretrained_model_checkpoint_path=/ckptpath/ --tf_quant --bs=64
     ```

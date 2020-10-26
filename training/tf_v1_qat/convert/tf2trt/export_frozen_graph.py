@@ -23,7 +23,7 @@ import os
 import tensorflow as tf
 from tensorflow.python.ops import array_ops
 
-from training.tf_v1_qat.examples.resnet.imagenet_main import ImagenetModel
+from training.tf_v1_qat.examples.imagenet_main import ImagenetModel
 from training.tf_v1_qat import quantize
 
 

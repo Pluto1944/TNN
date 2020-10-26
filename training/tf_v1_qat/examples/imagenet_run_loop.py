@@ -31,7 +31,8 @@ import os
 from absl import flags
 import tensorflow as tf
 
-from training.tf_v1_qat.examples.resnet import imagenet_preprocessing, resnet_model
+from training.tf_v1_qat.examples.resnet import resnet_model
+from training.tf_v1_qat.examples import imagenet_preprocessing
 from training.tf_v1_qat.examples.utils import export
 from training.tf_v1_qat.examples.utils.flags import core as flags_core
 from training.tf_v1_qat.examples.utils.logs import hooks_helper, logger
@@ -330,9 +331,7 @@ def learning_rate_with_decay(
   return learning_rate_fn
 
 
-def learning_rate_with_decay_quant(
-    batch_size, batch_denom, num_images, boundary_epochs, decay_rates,
-    base_lr=0.1, warmup=False):
+def learning_rate_with_decay_quant():
 
   def learning_rate_fn(global_step):
     """Builds scaled learning rate function with 5 epoch warm up."""
@@ -366,7 +365,7 @@ def per_replica_batch_size(batch_size, num_gpus):
     raise ValueError(err)
   return int(batch_size / num_gpus)
 
-def resnet_model_fn(features, labels, mode, model_class,
+def imagenet_model_fn(features, labels, mode, model_class,
                     resnet_size, weight_decay, learning_rate_fn, momentum,
                     data_format, resnet_version, loss_scale,
                     loss_filter_fn=None, dtype=resnet_model.DEFAULT_DTYPE,
@@ -566,7 +565,7 @@ def resnet_model_fn(features, labels, mode, model_class,
       eval_metric_ops=metrics)
 
 
-def resnet_main(
+def imagenet_main(
     flags_obj, model_function, input_function, dataset_name, shape=None):
   """Shared main loop for ResNet Models.
 

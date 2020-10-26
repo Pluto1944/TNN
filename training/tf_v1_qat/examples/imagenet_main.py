@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Runs a ResNet model on the ImageNet dataset."""
+"""Runs a model on the ImageNet dataset."""
 
 from __future__ import absolute_import
 from __future__ import division
@@ -24,7 +24,8 @@ from absl import app as absl_app
 from absl import flags
 import tensorflow as tf
 
-from training.tf_v1_qat.examples.resnet import imagenet_preprocessing, resnet_run_loop, resnet_model
+from training.tf_v1_qat.examples.resnet import resnet_model
+from training.tf_v1_qat.examples import imagenet_preprocessing, imagenet_run_loop
 from training.tf_v1_qat.examples.utils.flags import core as flags_core
 from training.tf_v1_qat.examples.utils.logs import logger
 
@@ -210,7 +211,7 @@ def input_fn(is_training,
       cycle_length=10,
       num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
-  return resnet_run_loop.process_record_dataset(
+  return imagenet_run_loop.process_record_dataset(
       dataset=dataset,
       is_training=is_training,
       batch_size=batch_size,
@@ -225,7 +226,7 @@ def input_fn(is_training,
 
 
 def get_synth_input_fn(dtype):
-  return resnet_run_loop.get_synth_input_fn(
+  return imagenet_run_loop.get_synth_input_fn(
       DEFAULT_IMAGE_SIZE, DEFAULT_IMAGE_SIZE, NUM_CHANNELS, NUM_CLASSES,
       dtype=dtype)
 
@@ -311,7 +312,7 @@ def _get_block_sizes(resnet_size):
 
 
 def imagenet_model_fn(features, labels, mode, params):
-  """Our model_fn for ResNet to be used with our Estimator."""
+  """Our model_fn for imagenet to be used with our Estimator."""
 
   # Warmup and higher lr may not be valid for fine tuning with small batches
   # and smaller numbers of training images.
@@ -324,22 +325,16 @@ def imagenet_model_fn(features, labels, mode, params):
   if flags.FLAGS.tf_quant:
     warmup = False
 
-  learning_rate_fn = resnet_run_loop.learning_rate_with_decay(
+  learning_rate_fn = imagenet_run_loop.learning_rate_with_decay(
       batch_size=params['batch_size'] * params.get('num_workers', 1),
       batch_denom=256, num_images=NUM_IMAGES['train'],
       boundary_epochs=[30, 60, 80, 90], decay_rates=[1, 0.1, 0.01, 0.001, 1e-4],
       warmup=warmup, base_lr=base_lr)
 
   if flags.FLAGS.tf_quant:
-        learning_rate_fn = resnet_run_loop.learning_rate_with_decay_quant(
-            batch_size=params['batch_size'] * params.get('num_workers', 1),
-            batch_denom=256, num_images=NUM_IMAGES['train'],
-            boundary_epochs=[30, 60, 80, 90], decay_rates=[1, 0.1, 0.01, 0.001, 1e-4],
-            warmup=warmup, base_lr=base_lr
-        )
+        learning_rate_fn = imagenet_run_loop.learning_rate_with_decay_quant()
 
-
-  return resnet_run_loop.resnet_model_fn(
+  return imagenet_run_loop.imagenet_model_fn(
       features=features,
       labels=labels,
       mode=mode,
@@ -359,11 +354,11 @@ def imagenet_model_fn(features, labels, mode, params):
 
 
 def define_imagenet_flags():
-  resnet_run_loop.define_resnet_flags(
+  imagenet_run_loop.define_resnet_flags(
       resnet_size_choices=['18', '34', '50', '101', '152', '200'],
       dynamic_loss_scale=True,
       fp16_implementation=True)
-  flags.adopt_module_key_flags(resnet_run_loop)
+  flags.adopt_module_key_flags(imagenet_run_loop)
   flags_core.set_defaults(train_epochs=90)
 
 
@@ -383,7 +378,7 @@ def run_imagenet(flags_obj):
                     get_synth_input_fn(flags_core.get_tf_dtype(flags_obj)) or
                     input_fn)
 
-  result = resnet_run_loop.resnet_main(
+  result = imagenet_run_loop.imagenet_main(
       flags_obj, imagenet_model_fn, input_function, DATASET_NAME,
       shape=[DEFAULT_IMAGE_SIZE, DEFAULT_IMAGE_SIZE, NUM_CHANNELS])
 
