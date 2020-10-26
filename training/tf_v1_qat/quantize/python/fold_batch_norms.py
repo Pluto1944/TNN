@@ -279,7 +279,7 @@ def _FindFusedBatchNorms(graph):
       # pylint: disable=protected-access
       bn_op._set_attr(
           '_gradient_op_type',
-          attr_value_pb2.AttrValue(s=compat.as_bytes('FoldFusedBatchNormGrad')))
+          attr_value_pb2.AttrValue(s=compat.as_bytes('FoldFusedBatchNormGradv2')))
       # pylint: enable=protected-access
       mean_tensor = bn_op.outputs[1]
       # The batch variance used during forward and backward prop is biased,
@@ -496,7 +496,7 @@ def _CloneWithNewOperands(layer_op, input_tensor, weight_tensor,
     raise ValueError('Cannot handle operation of type: %s' % layer_op.type)
 
 
-@ops.RegisterGradient('FoldFusedBatchNormGrad')
+@ops.RegisterGradient('FoldFusedBatchNormGradv2')
 def _FoldFusedBatchNormGrad(op,
                             unused_grad_y,
                             grad_mean,
