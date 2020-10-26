@@ -25,6 +25,7 @@ from absl import flags
 import tensorflow as tf
 
 from training.tf_v1_qat.examples.resnet import resnet_model
+from training.tf_v1_qat.examples.mobilenet import mobilenet_v2
 from training.tf_v1_qat.examples import imagenet_preprocessing, imagenet_run_loop
 from training.tf_v1_qat.examples.utils.flags import core as flags_core
 from training.tf_v1_qat.examples.utils.logs import logger
@@ -325,7 +326,13 @@ def imagenet_model_fn(features, labels, mode, params):
   if flags.FLAGS.tf_quant:
     warmup = False
 
-  learning_rate_fn = imagenet_run_loop.learning_rate_with_decay(
+  # mobilenetv2 lr
+  if flags.FLAGS.model_name == 'mobilenetv2':
+    learning_rate_fn = mobilenet_v2.learning_rate_with_decay_mobilenet(
+            batch_size=params['batch_size'] * params.get('num_workers', 1),
+            num_images=NUM_IMAGES['train'])
+  else:
+    learning_rate_fn = imagenet_run_loop.learning_rate_with_decay(
       batch_size=params['batch_size'] * params.get('num_workers', 1),
       batch_denom=256, num_images=NUM_IMAGES['train'],
       boundary_epochs=[30, 60, 80, 90], decay_rates=[1, 0.1, 0.01, 0.001, 1e-4],

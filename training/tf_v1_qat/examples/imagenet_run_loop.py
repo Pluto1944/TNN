@@ -32,6 +32,7 @@ from absl import flags
 import tensorflow as tf
 
 from training.tf_v1_qat.examples.resnet import resnet_model
+from training.tf_v1_qat.examples.mobilenet import mobilenet_v2
 from training.tf_v1_qat.examples import imagenet_preprocessing
 from training.tf_v1_qat.examples.utils import export
 from training.tf_v1_qat.examples.utils.flags import core as flags_core
@@ -414,15 +415,20 @@ def imagenet_model_fn(features, labels, mode, model_class,
   tf.compat.v1.summary.image('images', features, max_outputs=6)
   # Checks that features/images have same data type being used for calculations.
   assert features.dtype == dtype
-
-  model = model_class(resnet_size, data_format, resnet_version=resnet_version,
-                      dtype=dtype)
+  model_name = flags.FLAGS.model_name
 
   # TODO by guocy insert input qdq manually here.[0,255]-mean
   if flags.FLAGS.tf_quant:
     features = array_ops.quantize_and_dequantize_v3(features, input_min=-0.5, input_max=0.5, num_bits=8)
 
-  logits = model(features, mode == tf.estimator.ModeKeys.TRAIN)
+  if model_name == 'resnet':
+      model = model_class(resnet_size, data_format, resnet_version=resnet_version,
+                          dtype=dtype)
+      logits = model(features, mode == tf.estimator.ModeKeys.TRAIN)
+  elif model_name == 'mobilenetv2':
+      logits, _ = mobilenet_v2.mobilenet(features, is_training=(mode == tf.estimator.ModeKeys.TRAIN))
+  else:
+      raise ValueError('Not supported model %s', model_name)
 
   # This acts as a no-op if the logits are already in fp32 (provided logits are
   # not a SparseTensor). If dtype is is low precision, logits must be cast to
@@ -496,6 +502,12 @@ def imagenet_model_fn(features, labels, mode, model_class,
           momentum=momentum,
           weight_decay=weight_decay,
           skip_list=['batch_normalization', 'bias'])
+    elif model_name == 'mobilenetv2':
+        optimizer = tf.compat.v1.train.RMSPropOptimizer(
+            learning_rate=learning_rate,
+            decay=0.9,
+            momentum=0.9,
+            epsilon=1.0)
     else:
       optimizer = tf.compat.v1.train.MomentumOptimizer(
           learning_rate=learning_rate,
@@ -795,6 +807,11 @@ def define_resnet_flags(resnet_size_choices=None, dynamic_loss_scale=False,
   flags_core.define_benchmark()
   flags_core.define_distribution()
   flags.adopt_module_key_flags(flags_core)
+
+  flags.DEFINE_string(
+      name='model_name', default='resnet',
+      help=flags_core.help_wrap(
+          'supported resnet and mobilenetv2'))
 
   flags.DEFINE_enum(
       name='resnet_version', short_name='rv', default='1',
