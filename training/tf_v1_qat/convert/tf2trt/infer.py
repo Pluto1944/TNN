@@ -19,6 +19,7 @@ import PIL.Image
 import numpy as np
 import tensorrt as trt
 import pycuda.driver as cuda
+import pycuda.autoinit
 import image_processing
 
 TRT_DYNAMIC_DIM = -1

@@ -7,6 +7,8 @@ This sample demonstrates workflow for inferencing a Resnet-50 model trained usin
  - TensorRT >=7.1
  - Tensorflow=1.15
  - cuda >=10.2
+ - pycuda
+ - pillow
 
 ## Running the sample
 
