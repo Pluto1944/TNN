@@ -1,7 +1,7 @@
 # Tensorflow QAT models to TensorRT
 
 ## Description
-This sample demonstrates workflow for inferencing a Resnet-50 model trained using Quantization Aware Training with TensorRT.
+This sample demonstrates workflow for inferencing a Resnet-50 and a MobilenetV2 model trained using Quantization Aware Training with TensorRT.
 
 ## Prerequisites
  - TensorRT >=7.1
@@ -19,12 +19,16 @@ This sample demonstrates workflow for inferencing a Resnet-50 model trained usin
     python postprocess_checkpoint.py --input /path/model.ckpt --dense_layer resnet_model/dense/kernel
     ```
 
+ - No need to do postprocess for mobilenetV2.
+
 ### Step 2. Freeze graph to pb
  - Freeze tensorflow graph to pb. The input_format and the compute_format must be NCHW.
     ```
     cd training/tf_v1_qat/convert/tf2trt
     python export_frozen_graph.py --checkpoint=/path/new.ckpt --quantize --input_format NCHW --output_file=/path/resnet50v1.5.pb --symmetric --use_qdq --use_final_conv
     ```
+ - --model_name=mobilenetv2 for mobilenetv2
+
 
 ### Step 3. Tensorflow pb to ONNX
  - Convert tensorflow pb to ONNX. This step needs modifications in Tensorflow graph grappler to disable quantization scales folding into convolution op. You can use <a href="https://ngc.nvidia.com/catalog/containers/nvidia:tensorflow">TensorFlow NGC containers</a> or compile Tensorflow from source with this <a href="https://github.com/NVIDIA/tensorflow/commit/56d0fcb3ebc72c64deeed11e3443dae0a6bbee01#diff-f3c968af33d813270dacefabc01b6a73">commit</a>.
