@@ -154,7 +154,8 @@ def mobilenet_base(  # pylint: disable=invalid-name
     output_stride=None,
     use_explicit_padding=False,
     scope=None,
-    is_training=False):
+    is_training=False,
+    data_format=None):
   """Mobilenet base network.
 
   Constructs a network from inputs to the given final endpoint. By default
@@ -249,6 +250,8 @@ def mobilenet_base(  # pylint: disable=invalid-name
       params = dict(opdef.params)
       opdef.multiplier_func(params, multiplier)
       stride = params.get('stride', 1)
+      params['data_format'] = data_format
+      params['normalizer_params'] = {'data_format': data_format}
       if output_stride is not None and current_stride == output_stride:
         # If we have reached the target output_stride, then we need to employ
         # atrous convolution with stride=1 and multiply the atrous rate by the
@@ -362,7 +365,7 @@ def mobilenet(inputs,
     net = tf.identity(net, name='embedding')
 
     with tf.variable_scope('Logits'):
-      net = global_pool(net)
+      net = global_pool(net, data_format=mobilenet_args['data_format'])
       end_points['global_pool'] = net
       if not num_classes:
         return net, end_points
@@ -375,9 +378,13 @@ def mobilenet(inputs,
           activation_fn=None,
           normalizer_fn=None,
           biases_initializer=tf.zeros_initializer(),
-          scope='Conv2d_1c_1x1')
+          scope='Conv2d_1c_1x1',
+          data_format=mobilenet_args['data_format'])
 
-      logits = tf.squeeze(logits, [1, 2])
+      if mobilenet_args['data_format'] == 'NCHW':
+        logits = tf.squeeze(logits, [2, 3])
+      else:
+        logits = tf.squeeze(logits, [1, 2])
 
       logits = tf.identity(logits, name='output')
     end_points['Logits'] = logits
@@ -386,7 +393,7 @@ def mobilenet(inputs,
   return logits, end_points
 
 
-def global_pool(input_tensor, pool_op=tf.nn.avg_pool):
+def global_pool(input_tensor, pool_op=tf.nn.avg_pool, data_format=None):
   """Applies avg pool to produce 1x1 output.
 
   NOTE: This function is funcitonally equivalenet to reduce_mean, but it has
@@ -399,16 +406,28 @@ def global_pool(input_tensor, pool_op=tf.nn.avg_pool):
     a tensor batch_size x 1 x 1 x depth.
   """
   shape = input_tensor.get_shape().as_list()
-  if shape[1] is None or shape[2] is None:
-    kernel_size = tf.convert_to_tensor(
+  if data_format=='NCHW':
+    if shape[2] is None or shape[3] is None:
+      kernel_size = tf.convert_to_tensor(
+        [1, 1, tf.shape(input_tensor)[2],
+         tf.shape(input_tensor)[3]])
+    else:
+      kernel_size = [1, 1, shape[2], shape[3]]
+  else:
+    if shape[1] is None or shape[2] is None:
+      kernel_size = tf.convert_to_tensor(
         [1, tf.shape(input_tensor)[1],
          tf.shape(input_tensor)[2], 1])
-  else:
-    kernel_size = [1, shape[1], shape[2], 1]
+    else:
+      kernel_size = [1, shape[1], shape[2], 1]
+
   output = pool_op(
-      input_tensor, ksize=kernel_size, strides=[1, 1, 1, 1], padding='VALID')
+      input_tensor, ksize=kernel_size, strides=[1, 1, 1, 1], padding='VALID', data_format=data_format)
   # Recover output shape, for unknown shape.
-  output.set_shape([None, 1, 1, None])
+  if data_format == 'NCHW':
+    output.set_shape([None, None, 1, 1])
+  else:
+    output.set_shape([None, 1, 1, None])
   return output
 
 

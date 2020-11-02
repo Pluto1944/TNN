@@ -494,7 +494,7 @@ class Model(object):
     """
 
     with self._model_variable_scope():
-      # TODO byguocy for QAT frozen, this transpose can be removed when use_final_conv is true!
+      # For QAT frozen, this transpose can be removed when use_final_conv is true!
       if self.data_format == 'channels_first' and not self.use_final_conv:
         # Convert the inputs from channels_last (NHWC) to channels_first (NCHW).
         # This provides a large performance boost on GPU. See
@@ -544,7 +544,7 @@ class Model(object):
       inputs = tf.reduce_mean(input_tensor=inputs, axis=axes, keepdims=True)
       inputs = tf.identity(inputs, 'final_reduce_mean')
 
-      # TODO byguocy modified for QAT model converting!
+      # modified for QAT model converting!
       if self.use_final_conv:
           inputs = tf.compat.v1.layers.conv2d(
               inputs,

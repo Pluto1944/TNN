@@ -180,7 +180,9 @@ def expanded_conv(input_tensor,
                   endpoints=None,
                   use_explicit_padding=False,
                   padding='SAME',
-                  scope=None):
+                  scope=None,
+                  data_format=None,
+                  normalizer_params=None):
   """Depthwise Convolution Block with expansion.
 
   Builds a composite convolution that has the following structure
@@ -230,7 +232,12 @@ def expanded_conv(input_tensor,
   """
   with tf.variable_scope(scope, default_name='expanded_conv') as s, \
        tf.name_scope(s.original_name_scope):
-    prev_depth = input_tensor.get_shape().as_list()[3]
+    if data_format == 'NCHW':
+        cidx = 1
+    else:
+        cidx = 3
+
+    prev_depth = input_tensor.get_shape().as_list()[cidx]
     if  depthwise_location not in [None, 'input', 'output', 'expansion']:
       raise TypeError('%r is unknown value for depthwise_location' %
                       depthwise_location)
@@ -247,8 +254,10 @@ def expanded_conv(input_tensor,
         stride=stride,
         rate=rate,
         normalizer_fn=normalizer_fn,
+        normalizer_params=normalizer_params,
         padding=padding,
-        scope='depthwise')
+        scope='depthwise',
+        data_format=data_format)
     # b1 -> b2 * r -> b2
     #   i -> (o * r) (bottleneck) -> o
     input_tensor = tf.identity(input_tensor, 'input')
@@ -264,14 +273,16 @@ def expanded_conv(input_tensor,
     else:
       inner_size = expansion_size
 
-    if inner_size > net.shape[3]:
+    if inner_size > net.shape[cidx]:
       net = split_conv(
           net,
           inner_size,
           num_ways=split_expansion,
           scope='expand',
           stride=1,
-          normalizer_fn=normalizer_fn)
+          normalizer_fn=normalizer_fn,
+          data_format=data_format,
+          normalizer_params=normalizer_params)
       net = tf.identity(net, 'expansion_output')
     if endpoints is not None:
       endpoints['expansion_output'] = net
@@ -295,7 +306,9 @@ def expanded_conv(input_tensor,
         stride=1,
         scope='project',
         normalizer_fn=normalizer_fn,
-        activation_fn=tf.identity)
+        activation_fn=tf.identity,
+        data_format=data_format,
+        normalizer_params=normalizer_params)
     if endpoints is not None:
       endpoints['projection_output'] = net
     if depthwise_location == 'output':
@@ -310,8 +323,8 @@ def expanded_conv(input_tensor,
           # dimensions are None
           stride == 1 and
           # Depth matches
-          net.get_shape().as_list()[3] ==
-          input_tensor.get_shape().as_list()[3]):
+          net.get_shape().as_list()[cidx] ==
+          input_tensor.get_shape().as_list()[cidx]):
       net += input_tensor
     return tf.identity(net, name='output')
 
@@ -321,6 +334,8 @@ def split_conv(input_tensor,
                num_ways,
                scope,
                divisible_by=8,
+               data_format=None,
+               normalizer_params=None,
                **kwargs):
   """Creates a split convolution.
 
@@ -338,23 +353,30 @@ def split_conv(input_tensor,
   Returns:
     tensor
   """
-  b = input_tensor.get_shape().as_list()[3]
+  if data_format == 'NCHW':
+      cidx = 1
+  else:
+      cidx = 3
+  b = input_tensor.get_shape().as_list()[cidx]
 
   if num_ways == 1 or min(b // num_ways,
                           num_outputs // num_ways) < divisible_by:
     # Don't do any splitting if we end up with less than 8 filters
     # on either side.
-    return slim.conv2d(input_tensor, num_outputs, [1, 1], scope=scope, **kwargs)
+    return slim.conv2d(input_tensor, num_outputs, [1, 1], scope=scope,
+                       normalizer_params=normalizer_params,
+                       data_format=data_format, **kwargs)
 
   outs = []
   input_splits = _split_divisible(b, num_ways, divisible_by=divisible_by)
   output_splits = _split_divisible(
       num_outputs, num_ways, divisible_by=divisible_by)
-  inputs = tf.split(input_tensor, input_splits, axis=3, name='split_' + scope)
+  inputs = tf.split(input_tensor, input_splits, axis=cidx, name='split_' + scope)
   base = scope
   for i, (input_tensor, out_size) in enumerate(zip(inputs, output_splits)):
     scope = base + '_part_%d' % (i,)
-    n = slim.conv2d(input_tensor, out_size, [1, 1], scope=scope, **kwargs)
+    n = slim.conv2d(input_tensor, out_size, [1, 1], scope=scope, data_format=data_format,
+                    normalizer_params=normalizer_params, **kwargs)
     n = tf.identity(n, scope + '_output')
     outs.append(n)
-  return tf.concat(outs, 3, name=scope + '_concat')
+  return tf.concat(outs, cidx, name=scope + '_concat')

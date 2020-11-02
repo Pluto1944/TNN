@@ -189,7 +189,7 @@ def learning_rate_with_decay_mobilenet(
   batches_per_epoch = num_images / batch_size
 
   def expo_rate_fn(global_step):
-      num_epochs_per_decay = 1.5 #2.5 / flags.FLAGS.num_gpus
+      num_epochs_per_decay = 2 #2.5 / flags.FLAGS.num_gpus
       decay_steps = int(batches_per_epoch * num_epochs_per_decay)
       expo_rate = tf.train.exponential_decay(
           0.045 * flags.FLAGS.num_gpus,

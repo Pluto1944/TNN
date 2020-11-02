@@ -417,7 +417,7 @@ def imagenet_model_fn(features, labels, mode, model_class,
   assert features.dtype == dtype
   model_name = flags.FLAGS.model_name
 
-  # TODO by guocy insert input qdq manually here.[0,255]-mean
+  # insert input qdq manually here.[0,255]-mean
   if flags.FLAGS.tf_quant:
     features = array_ops.quantize_and_dequantize_v3(features, input_min=-0.5, input_max=0.5, num_bits=8)
 
@@ -671,7 +671,7 @@ def imagenet_main(
     dataset_name = dataset_name + '-synthetic'
 
   benchmark_logger = logger.get_benchmark_logger()
-  benchmark_logger.log_run_info('resnet', dataset_name, run_params,
+  benchmark_logger.log_run_info(flags.FLAGS.model_name, dataset_name, run_params,
                                 test_id=flags_obj.benchmark_test_id)
 
   train_hooks = hooks_helper.get_train_hooks(

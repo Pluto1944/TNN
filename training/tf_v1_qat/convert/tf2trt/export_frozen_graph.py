@@ -24,12 +24,13 @@ import tensorflow as tf
 from tensorflow.python.ops import array_ops
 
 from training.tf_v1_qat.examples.imagenet_main import ImagenetModel
+from training.tf_v1_qat.examples.mobilenet import mobilenet_v2
 from training.tf_v1_qat import quantize
 
 
 tf.app.flags.DEFINE_string(
     'model_name', 'resnet50', 'The name of the architecture to save. The default name was being '
-                              'used to train the model')
+                              'used to train the model. resnet50, mobilenetv2')
 
 tf.app.flags.DEFINE_integer(
     'image_size', 224,
@@ -86,14 +87,21 @@ def main(_):
             input_shape = [FLAGS.batch_size, FLAGS.image_size, FLAGS.image_size, 3]
         input_images = tf.placeholder(name='input', dtype=tf.float32, shape=input_shape)
 
-        # TODO by guocy insert input qdq manually here.
+        # insert input qdq manually here.
         if FLAGS.quantize:
             input_images = array_ops.quantize_and_dequantize_v3(input_images, input_min=-0.5, input_max=0.5, num_bits=8)
 
-        # TODO byguocy model here Resnet50 must channels_first!
-        network = ImagenetModel(50, data_format=FLAGS.compute_format, resnet_version=1,
-                                use_final_conv=FLAGS.use_final_conv)
-        logits = network(input_images, False)
+        # QAT needs channels_first both input_format and compute_format
+
+        if FLAGS.model_name == 'resnet50':
+            network = ImagenetModel(50, data_format=FLAGS.compute_format, resnet_version=1,
+                                    use_final_conv=FLAGS.use_final_conv)
+            logits = network(input_images, False)
+        elif FLAGS.model_name == 'mobilenetv2':
+            logits, _ = mobilenet_v2.mobilenet(input_images, is_training=False, data_format=FLAGS.input_format)
+        else:
+            raise NotImplementedError("%s not implemented!" % FLAGS.model_name)
+
         logits = tf.cast(logits, tf.float32)
         axis = 3 if FLAGS.input_format == "NHWC" else 1
         probs = tf.nn.softmax(logits, name='softmax_tensor', axis=axis)
