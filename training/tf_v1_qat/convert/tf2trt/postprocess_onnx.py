@@ -19,7 +19,7 @@ import onnx
 import numpy as np
 
 
-def process_transpose_nodes(graph):
+def process_nodes(graph):
     """
     This is a workaround to manually transpose the conv weights and remove
     the existing transpose nodes. Currently TRT has a limitation when there is
@@ -30,13 +30,29 @@ def process_transpose_nodes(graph):
     conv_nodes = [node for node in graph.nodes if node.op == "Conv"]
     for node in conv_nodes:
         # Transpose the convolutional weights and reset them to the weights
-        conv_weights_tensor = node.i(1).i().i().inputs[0]
-        conv_weights_transposed = np.transpose(conv_weights_tensor.values, [3, 2, 0, 1])
-        conv_weights_tensor.values = conv_weights_transposed
+        if node.i(1).i().op == "Reshape" and args.reshape:
+            conv_weights_tensor = node.i(1).i().i().i().inputs[0]
+            conv_weights_transposed = np.transpose(conv_weights_tensor.values, [2, 3, 0, 1])
+            conv_weights_tensor.values = conv_weights_transposed
 
-        # Remove the transpose nodes after the dequant node. TensorRT does not support transpose nodes after QDQ nodes.
-        dequant_node_output = node.i(1).i(0).outputs[0]
-        node.inputs[1] = dequant_node_output
+            # Remove the reshape nodes after the dequant node. TensorRT does not support transpose nodes after QDQ nodes.
+            dequant_node_output = node.i(1).i(0).i(0).outputs[0]
+            node.inputs[1] = dequant_node_output
+        elif args.transpose:
+            conv_weights_tensor = node.i(1).i().i().inputs[0]
+            conv_weights_transposed = np.transpose(conv_weights_tensor.values, [3, 2, 0, 1])
+            conv_weights_tensor.values = conv_weights_transposed
+
+            # Remove the transpose nodes after the dequant node. TensorRT does not support transpose nodes after QDQ nodes.
+            dequant_node_output = node.i(1).i(0).outputs[0]
+            node.inputs[1] = dequant_node_output
+
+    if args.add:
+        for node in graph.nodes:
+            if node.op == "Add":
+                if node.i(0).op == "DequantizeLinear" and node.i(1).op == "DequantizeLinear":
+                    assert len(node.inputs) == 2
+                    node.inputs = [node.inputs[1], node.inputs[0]]
 
     # Remove unused nodes, and topologically sort the graph.
     return graph.cleanup().toposort()
@@ -46,13 +62,19 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser("Post process ONNX graph by removing transpose nodes")
     parser.add_argument("--input", required=True, help="Input onnx graph")
     parser.add_argument("--output", default='postprocessed_rn50.onnx', help="Name of post processed onnx graph")
+
+    # workaround
+    parser.add_argument("--add", action='store_true', help="revert add input")
+    parser.add_argument("--reshape", action='store_true', help="remove reshape node")
+    parser.add_argument("--transpose", action='store_true', help="remove transpose node")
+
     args = parser.parse_args()
 
     # Load the rn50 graph
     graph = gs.import_onnx(onnx.load(args.input))
 
     # Remove the transpose nodes and reshape the convolution weights
-    graph = process_transpose_nodes(graph)
+    graph = process_nodes(graph)
 
     # Export the onnx graph from graphsurgeon
     onnx_model = gs.export_onnx(graph)
