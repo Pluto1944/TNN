@@ -38,7 +38,7 @@ def define_image(data_format=True):
   if data_format:
     flags.DEFINE_enum(
         name="data_format", short_name="df", default=None,
-        enum_values=["channels_first", "channels_last"],
+        enum_values=["channels_first", "channels_last", "NCHW", "NHWC"],
         help=help_wrap(
             "A flag to override the data format used in the model. "
             "channels_first provides a performance boost on GPU but is not "

@@ -155,7 +155,7 @@ def mobilenet_base(  # pylint: disable=invalid-name
     use_explicit_padding=False,
     scope=None,
     is_training=False,
-    data_format=None):
+    data_format='NHWC'):
   """Mobilenet base network.
 
   Constructs a network from inputs to the given final endpoint. By default

@@ -426,7 +426,8 @@ def imagenet_model_fn(features, labels, mode, model_class,
                           dtype=dtype)
       logits = model(features, mode == tf.estimator.ModeKeys.TRAIN)
   elif model_name == 'mobilenetv2':
-      logits, _ = mobilenet_v2.mobilenet(features, is_training=(mode == tf.estimator.ModeKeys.TRAIN))
+      logits, _ = mobilenet_v2.mobilenet(features, is_training=(mode == tf.estimator.ModeKeys.TRAIN),
+                                         data_format=data_format)
   else:
       raise ValueError('Not supported model %s', model_name)
 
