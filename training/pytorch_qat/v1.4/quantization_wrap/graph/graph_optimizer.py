@@ -39,24 +39,34 @@ def wrap_optimizer(model_auto, x):
     graph = traced.graph
     torch._C._jit_pass_inline(graph)
 
-    nodes = [node for node in graph.nodes() if 'aten' in node.kind() or 'quantized' in node.kind()][1:-1]
+    input_to_ops = InputToOps(graph)
 
-    # nodes = [node for node in graph.nodes()][1:-1]
+    nodes = [node for node in graph.nodes() if 'aten' in node.kind() or 'quantized' in node.kind()][1:-1]
 
     for i, node in enumerate(nodes):
         if i + 1 == len(nodes): continue
         if 'aten::quant' in node.kind() and nodes[i + 1].kind() == 'aten::dequantize':
+
+            list_next_node = input_to_ops.consumer_operations(node)
+
+            flag = False
+            for next_node in list_next_node:
+                if next_node.kind() != 'aten::dequantize':
+                    flag = True
+            if flag == True:
+                continue
+
             module = node.scopeName().split('/')[-1].replace('__module.', '')
             attr = module.split('.')[-1]
             module = module.replace(attr, '')[:-1]
 
             setattr(_get_module(model_auto, module), attr, torch.nn.Identity())
 
-            module = nodes[i + 1].scopeName().split('/')[-1].replace('__module.', '')
-            attr = module.split('.')[-1]
-            module = module.replace(attr, '')[:-1]
-
-            setattr(_get_module(model_auto, module), attr, torch.nn.Identity())
+            for next_node in list_next_node:
+                module = next_node.scopeName().split('/')[-1].replace('__module.', '')
+                attr = module.split('.')[-1]
+                module = module.replace(attr, '')[:-1]
+                setattr(_get_module(model_auto, module), attr, torch.nn.Identity())
 
 
 def _fuse_modules(model, modules_to_fuse, fuser_func=fuse_known_modules):

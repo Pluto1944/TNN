@@ -179,7 +179,7 @@ class QuantizableModel(nn.Module):
         _replace_relu(self.model)
 
         # Set default blacklist
-        default_black_list = ['model.'+n for n, w in model.named_modules() if n.endswith('wrap_relu.relu')]
+        default_black_list = ['model.'+n for n, w in model.named_modules() if n.endswith('.relu_wrap')]
         # Set blacklist
         self.black_list = black_list + default_black_list
 

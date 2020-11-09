@@ -18,29 +18,31 @@ class AddWrap(nn.Module):
     def __init__(self):
         super(AddWrap, self).__init__()
 
-        self.add_dequant = torch.quantization.DeQuantStub()
+        self.add_dequant_1 = torch.quantization.DeQuantStub()
+        self.add_dequant_2 = torch.quantization.DeQuantStub()
         self.add_quant = torch.quantization.QuantStub()
 
     def forward(self, x, y):
-        x = self.add_dequant(x)
-        y = self.add_dequant(y)
+        x = self.add_dequant_1(x)
+        y = self.add_dequant_2(y)
         x = x + y
         x = self.add_quant(x)
         return x
+
 
 class ReluWrap(nn.Module):
 
     def __init__(self):
         super(ReluWrap, self).__init__()
 
-        self.relu = nn.ReLU(inplace=True)
+        self.relu_wrap = nn.ReLU(inplace=True)
 
         self.relu_dequant = torch.quantization.DeQuantStub()
         self.relu_quant = torch.quantization.QuantStub()
 
     def forward(self, x):
         x = self.relu_dequant(x)
-        x = self.relu(x)
+        x = self.relu_wrap(x)
         x = self.relu_quant(x)
 
         return x
@@ -69,11 +71,20 @@ class CatWrap(nn.Module):
     def __init__(self):
         super(CatWrap, self).__init__()
 
-        self.cat_dequant = torch.quantization.DeQuantStub()
+        self.cat_dequant_0 = torch.quantization.DeQuantStub()
+        self.cat_dequant_1 = torch.quantization.DeQuantStub()
+        self.cat_dequant_2 = torch.quantization.DeQuantStub()
         self.cat_quant = torch.quantization.QuantStub()
 
     def forward(self, x, dim=1):
-        x = [self.cat_dequant(xx) for xx in x]
+        # x = [self.cat_dequant(xx) for xx in x]
+        if len(x) == 2:
+            x = [self.cat_dequant_0(x[0]), self.cat_dequant_1(x[1])]
+        elif len(x) == 3:
+            x = [self.cat_dequant_0(x[0]), self.cat_dequant_1(x[1]), self.cat_dequant_2(x[2])]
+        else:
+            raise Exception("CatWrap op temporarily only supports cat operations with two or three parameters!")
+
         x = torch.cat(x, dim=dim)
         x = self.cat_quant(x)
         return x
@@ -116,9 +127,9 @@ class Interpolate(nn.Module):
         self.dequant = torch.quantization.DeQuantStub()
         self.quant = torch.quantization.QuantStub()
 
-    def forward(self, x, scale_factor=2, mode='nearest'):
+    def forward(self, x, **kwargs):
         x = self.dequant(x)
-        x = torch.nn.functional.interpolate(x, scale_factor=scale_factor, mode=mode)
+        x = torch.nn.functional.interpolate(x, **kwargs)
         x = self.quant(x)
         return x
 
@@ -171,3 +182,21 @@ class FlattenWrap(nn.Module):
         x = torch.flatten(x, 1)
         x = self.flatten_quant(x)
         return x
+
+
+class PadWrap(nn.Module):
+
+    def __init__(self):
+        super(PadWrap, self).__init__()
+
+        self.quant = torch.quantization.QuantStub()
+        self.dequant = torch.quantization.DeQuantStub()
+
+    def forward(self, x, pad):
+        x = self.dequant(x)
+        x = torch.nn.functional.pad(x, pad=pad)
+        x = self.quant(x)
+
+        return x
+
+
