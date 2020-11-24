@@ -311,12 +311,15 @@ class GraphOptimizer(object):
 
         if self.graphoptimizer == 'hard':
             # resnet add relu
-            # layers = set([k.split('conv')[0][:-1] for k, v in self.model.named_parameters() if 'conv' in k and 'layer' in k])
-            layers = set(k.replace('.relu', '') for k, v in self.aten_op_matches['relu'].items() if v > 1)
-            for layer in layers:
-                _get_module(self.model, layer).register_forward_hook(hook)
+            flag = set([k.split('conv')[0][:-1] for k, v in self.model.named_parameters() if 'conv' in k and 'layer' in k])
+            if len(flag) > 0:
+                layers = set(k.replace('.relu', '') for k, v in self.aten_op_matches['relu'].items() if v > 1)
+                for layer in layers:
+                    _get_module(self.model, layer).register_forward_hook(hook)
         else:
-            layers = set(k.replace('.relu', '') for k, v in self.aten_op_matches['relu'].items() if v > 1)
-            for layer in layers:
-                _get_module(self.model, layer).add_module('layer_process_3', torch.nn.ReLU())
-                _get_module(self.model, layer).register_forward_hook(lambda self, input, output: self.layer_process_3(output))
+            flag = set([k.split('conv')[0][:-1] for k, v in self.model.named_parameters() if 'conv' in k and 'layer' in k])
+            if len(flag) > 0:
+                layers = set(k.replace('.relu', '') for k, v in self.aten_op_matches['relu'].items() if v > 1)
+                for layer in layers:
+                    _get_module(self.model, layer).add_module('layer_process_3', torch.nn.ReLU())
+                    _get_module(self.model, layer).register_forward_hook(lambda self, input, output: self.layer_process_3(output))
